@@ -193,38 +193,38 @@
     request.onsuccess = (e) => { db = e.target.result; renderFiles(); };
 
     async function hashContent(str) {
-      const msgBuffer = new TextEncoder().encode(str + "KRONOS_MASTER_V3");
+      const msgBuffer = new TextEncoder().encode(str + "KRONOS_V4_FINAL");
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    /* ULTRA ROBUST TEXT EXTRACTION */
+    /* BRUTE FORCE CLEANER */
+    function bruteClean(raw) {
+      // 1. Remove non-printable and control chars
+      let clean = raw.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+      
+      // 2. Find the extension index
+      const extIdx = clean.indexOf(MASTER_EXT);
+      if (extIdx === -1) return clean; // Extension not found
+
+      // 3. Extract exactly 22 chars BEFORE the extension
+      // We look for the last 22 chars before the extension, ignoring any junk at the start
+      const startIdx = Math.max(0, extIdx - 22);
+      const keyPart = clean.substring(startIdx, extIdx);
+      
+      // 4. Reconstruct: Key (22) + Extension
+      return keyPart + MASTER_EXT;
+    }
+
     function extractText(message) {
-      let text = "";
+      let fullRaw = "";
       for (const record of message.records) {
         try {
-          const data = new Uint8Array(record.data.buffer || record.data);
-          // NDEF Text records have a status byte at the start
-          // Bit 7: UTF-8 (0) or UTF-16 (1)
-          // Bits 5-0: Length of language code
-          const statusByte = data[0];
-          const langLen = statusByte & 0x3F;
-          const isUtf16 = (statusByte & 0x80) !== 0;
-          
-          const textData = data.slice(1 + langLen);
-          const decoder = new TextDecoder(isUtf16 ? 'utf-16' : 'utf-8');
-          text += decoder.decode(textData);
-        } catch(e) {
-          // Fallback: raw decode and clean
-          try {
-            const raw = new TextDecoder('utf-8').decode(record.data);
-            // Remove non-printable characters and language prefix (e.g. 'en')
-            text += raw.replace(/[\x00-\x1F\x7F-\x9F]/g, "").replace(/^[a-z]{2}/, "");
-          } catch(e2) {}
-        }
+          const decoder = new TextDecoder('utf-8');
+          fullRaw += decoder.decode(record.data);
+        } catch(e) {}
       }
-      // Final cleanup: remove any hidden control chars and whitespace
-      return text.replace(/[\x00-\x1F\x7F-\x9F]/g, "").trim();
+      return bruteClean(fullRaw);
     }
 
     async function startNFCAuth() {
@@ -238,17 +238,14 @@
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.onreading = async ({ message }) => {
-          const raw = extractText(message);
+          const cleaned = extractText(message);
           
-          // Debugging log for auth
-          console.log("Auth Read:", raw);
-
-          if (!raw.includes(MASTER_EXT)) return setStatus('auth-status', 'EXTENSION MISSING', 'status-err');
+          if (!cleaned.includes(MASTER_EXT)) return setStatus('auth-status', 'EXTENSION MISSING', 'status-err');
           
-          const keyPart = raw.split(MASTER_EXT)[0];
+          const keyPart = cleaned.replace(MASTER_EXT, "");
           if (keyPart.length !== 22) return setStatus('auth-status', `INVALID KEY (${keyPart.length}/22)`, 'status-err');
           
-          const currentHash = await hashContent(raw);
+          const currentHash = await hashContent(cleaned);
           if (currentHash === savedHash) {
             setStatus('auth-status', 'ACCESS GRANTED', 'status-ok');
             setTimeout(login, 800);
@@ -269,21 +266,21 @@
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.onreading = async ({ message }) => {
-          const raw = extractText(message);
-          debug.textContent = "Read: " + raw;
+          const cleaned = extractText(message);
+          debug.textContent = "Detected: " + cleaned;
 
-          if (!raw.includes(MASTER_EXT)) {
+          if (!cleaned.includes(MASTER_EXT)) {
             setStatus('ermac-status', 'FAILED: EXTENSION MISSING', 'status-err');
             return;
           }
 
-          const keyPart = raw.split(MASTER_EXT)[0];
+          const keyPart = cleaned.replace(MASTER_EXT, "");
           if (keyPart.length !== 22) {
             setStatus('ermac-status', `FAILED: KEY IS ${keyPart.length} CHARS (NEED 22)`, 'status-err');
             return;
           }
 
-          const encrypted = await hashContent(raw);
+          const encrypted = await hashContent(cleaned);
           localStorage.setItem('kronos_key_enc', encrypted);
           localStorage.removeItem('kronos_emergency');
           setStatus('ermac-status', 'MASTER KEY REGISTERED', 'status-ok');
