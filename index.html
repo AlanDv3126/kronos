@@ -187,9 +187,12 @@
     async function startNFCAuth() {
       if (!('NDEFReader' in window)) return setStatus('auth-status', 'NFC NOT SUPPORTED', 'status-err');
       
+      // RESET STATUS
+      setStatus('auth-status', '', '');
+
       // ABSOLUTE SECURITY CHECK
       if (localStorage.getItem('kronos_emergency') === '1') {
-        return setStatus('auth-status', 'EMERGENCY LOCK ACTIVE - NO KEY ACCESS', 'status-err');
+        return setStatus('auth-status', 'EMERGENCY LOCK ACTIVE - NO KEY REGISTERED', 'status-err');
       }
       
       const savedHash = localStorage.getItem('kronos_key_enc');
@@ -229,6 +232,7 @@
           localStorage.setItem('kronos_key_enc', await hashContent(cleaned));
           localStorage.removeItem('kronos_emergency'); // Unlock emergency on new register
           setStatus('ermac-status', 'KEY REGISTERED', 'status-ok');
+          setStatus('auth-status', 'KEY UPDATED - READY', 'status-ok');
           updateErmacUI();
         };
       } catch (e) { setStatus('ermac-status', 'NFC ERROR', 'status-err'); }
@@ -243,12 +247,31 @@
 
     // UI & Storage Helpers
     function login() { document.getElementById('lock-screen').classList.add('hidden'); document.getElementById('main-screen').classList.remove('hidden'); renderFiles(); }
-    function kickOut() { document.getElementById('main-screen').classList.add('hidden'); document.getElementById('lock-screen').classList.remove('hidden'); setStatus('auth-status', 'LOCKED', ''); }
-    function checkErmacPin() {
-      if (document.getElementById('pin-input').value === PIN_ERMAC) { closeModal('modal-pin'); openErmacPanel(); }
-      else setStatus('pin-status', 'DENIED', 'status-err');
+    function kickOut() { 
+      document.getElementById('main-screen').classList.add('hidden'); 
+      document.getElementById('lock-screen').classList.remove('hidden'); 
+      setStatus('auth-status', 'SYSTEM LOCKED', 'status-err');
+      // Limpiar estados de sesión
+      document.getElementById('pin-input').value = '';
     }
-    function openErmacPanel() { openModal('modal-ermac'); updateErmacUI(); }
+
+    function checkErmacPin() {
+      const input = document.getElementById('pin-input');
+      if (input.value === PIN_ERMAC) { 
+        input.value = ''; // Limpiar inmediatamente después de usar
+        closeModal('modal-pin'); 
+        openErmacPanel(); 
+      } else {
+        setStatus('pin-status', 'ACCESS DENIED', 'status-err');
+        input.value = ''; // Limpiar en fallo también
+      }
+    }
+
+    function openErmacPanel() { 
+      document.getElementById('pin-input').value = ''; // Asegurar limpieza
+      openModal('modal-ermac'); 
+      updateErmacUI(); 
+    }
     function updateErmacUI() {
       const isEmergency = localStorage.getItem('kronos_emergency') === '1';
       const hasKey = localStorage.getItem('kronos_key_enc');
@@ -258,7 +281,10 @@
       else { statusEl.textContent = "NO KEY"; statusEl.style.color = "var(--yellow)"; }
     }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeModal(id) { 
+      document.getElementById(id).classList.add('hidden'); 
+      if (id === 'modal-pin') document.getElementById('pin-input').value = '';
+    }
     function setStatus(id, msg, cls) { const el = document.getElementById(id); el.textContent = msg; el.className = 'status-msg ' + cls; }
 
     // File Operations
