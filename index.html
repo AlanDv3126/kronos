@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#050505" />
   <title>KRONOS — Secure Storage</title>
   <style>
-    /* ===== CORE STYLES ===== */
+    /* CORE STYLES */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --red:        #e01010;
@@ -21,73 +21,23 @@
       --white:      #eee;
       --white-dim:  #aaa;
       --green:      #00ff88;
-      --blue:       #00aaff;
       --yellow:     #ffc800;
     }
-
-    html, body {
-      width: 100%; height: 100%;
-      background: var(--black);
-      color: var(--white-dim);
-      font-family: 'Courier New', Courier, monospace;
-      overflow: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Scanlines Overlay */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
-      pointer-events: none; z-index: 9999;
-    }
-
-    /* HUD Decorations */
+    html, body { width: 100%; height: 100%; background: var(--black); color: var(--white-dim); font-family: 'Courier New', Courier, monospace; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+    body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 9999; }
     .hud-line { position: fixed; background: var(--red-dim); opacity: 0.15; z-index: 100; }
     .hud-h { height: 1px; width: 100%; left: 0; }
     .hud-v { width: 1px; height: 100%; top: 0; }
-    #hl-top    { top: 12px; }
-    #hl-bottom { bottom: 12px; }
-    #hl-left   { left: 12px; }
-    #hl-right  { right: 12px; }
-
-    /* Screen Base */
-    .screen {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 0.6s ease;
-      z-index: 10;
-    }
+    #hl-top { top: 12px; } #hl-bottom { bottom: 12px; } #hl-left { left: 12px; } #hl-right { right: 12px; }
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; z-index: 10; }
     .screen.hidden { opacity: 0; pointer-events: none; }
-
-    /* Common Components */
-    .btn {
-      background: transparent;
-      border: 1px solid var(--red);
-      color: var(--red-bright);
-      font-family: 'Courier New', Courier, monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      padding: 12px 24px;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn::after {
-      content: ''; position: absolute; inset: 0; background: var(--red);
-      transform: scaleX(0); transform-origin: left; transition: transform 0.3s; z-index: -1;
-    }
+    .btn { background: transparent; border: 1px solid var(--red); color: var(--red-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase; letter-spacing: 0.2em; padding: 12px 24px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+    .btn::after { content: ''; position: absolute; inset: 0; background: var(--red); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; z-index: -1; }
     .btn:hover::after, .btn:active::after { transform: scaleX(1); }
     .btn:hover, .btn:active { color: #fff; box-shadow: 0 0 15px var(--red-glow); }
-
     .corners { position: relative; }
     .c { position: absolute; width: 12px; height: 12px; border-color: var(--red); border-style: solid; }
-    .c-tl { top: -6px; left: -6px; border-width: 2px 0 0 2px; }
-    .c-tr { top: -6px; right: -6px; border-width: 2px 2px 0 0; }
-    .c-bl { bottom: -6px; left: -6px; border-width: 0 0 2px 2px; }
-    .c-br { bottom: -6px; right: -6px; border-width: 0 2px 2px 0; }
+    .c-tl { top: -6px; left: -6px; border-width: 2px 0 0 2px; } .c-tr { top: -6px; right: -6px; border-width: 2px 2px 0 0; } .c-bl { bottom: -6px; left: -6px; border-width: 0 0 2px 2px; } .c-br { bottom: -6px; right: -6px; border-width: 0 2px 2px 0; }
 
     /* LOCK SCREEN */
     #lock-screen { background: radial-gradient(ellipse at center, #150000 0%, #050505 75%); }
@@ -133,6 +83,7 @@
     .status-scan { color: var(--yellow); animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     #file-upload-input { display: none; }
+    .debug-box { background: #000; border: 1px solid var(--grey-mid); padding: 10px; font-size: 0.6rem; color: var(--grey-light); margin-top: 15px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -199,6 +150,7 @@
         <div id="ermac-key-status" style="font-size:0.7rem; color:var(--yellow); margin-bottom:15px;">NO KEY REGISTERED</div>
         <p style="font-size:0.6rem; color:var(--grey-mid); margin-bottom:10px;">Rule: 22 chars + Master Extension</p>
         <button class="btn" style="width:100%; font-size:0.75rem;" onclick="scanErmacTag()">SCAN & REGISTER TAG</button>
+        <div class="debug-box" id="ermac-debug">Debug: Awaiting scan...</div>
       </div>
       <button class="btn" style="width:100%; font-size:0.75rem; border-color:#ff8800; color:#ff8800;" onclick="emergencyLock()">EMERGENCY LOCK (NO KEY)</button>
       <button class="btn" style="width:100%; font-size:0.75rem; margin-top:10px; border-color:var(--grey-mid); color:var(--grey-light);" onclick="closeModal('modal-ermac')">CLOSE</button>
@@ -225,6 +177,8 @@
     const STORE_FILES = 'files';
     const STORE_FOLDERS = 'folders';
     const PIN_ERMAC = '59131721';
+    
+    // THE EXACT EXTENSION
     const MASTER_EXT = "(k8#N9!vP3$zL2@xQ7&wR5t)+(m2!R8#vK9$zP4@xQ1&wL5a)";
     
     let db;
@@ -233,60 +187,68 @@
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_FILES)) {
-        const fileStore = db.createObjectStore(STORE_FILES, { keyPath: 'id', autoIncrement: true });
-        fileStore.createIndex('path', 'path', { unique: false });
-      }
-      if (!db.objectStoreNames.contains(STORE_FOLDERS)) {
-        const folderStore = db.createObjectStore(STORE_FOLDERS, { keyPath: 'id', autoIncrement: true });
-        folderStore.createIndex('path', 'path', { unique: false });
-      }
+      if (!db.objectStoreNames.contains(STORE_FILES)) db.createObjectStore(STORE_FILES, { keyPath: 'id', autoIncrement: true }).createIndex('path', 'path', { unique: false });
+      if (!db.objectStoreNames.contains(STORE_FOLDERS)) db.createObjectStore(STORE_FOLDERS, { keyPath: 'id', autoIncrement: true }).createIndex('path', 'path', { unique: false });
     };
     request.onsuccess = (e) => { db = e.target.result; renderFiles(); };
 
     async function hashContent(str) {
-      const msgBuffer = new TextEncoder().encode(str + "KRONOS_MASTER_SALT_V2");
+      const msgBuffer = new TextEncoder().encode(str + "KRONOS_MASTER_V3");
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
+    /* ULTRA ROBUST TEXT EXTRACTION */
     function extractText(message) {
       let text = "";
       for (const record of message.records) {
         try {
-          if (record.recordType === "text") {
-            // NDEF Text Record: The first byte contains the language code length.
-            const data = new Uint8Array(record.data.buffer || record.data);
-            const langLen = data[0] & 0x3F;
-            const textBytes = data.slice(1 + langLen);
-            text += new TextDecoder('utf-8').decode(textBytes);
-          } else {
-            // Fallback for other record types
-            text += new TextDecoder('utf-8').decode(record.data);
-          }
-        } catch(e) { console.error("Extract error:", e); }
+          const data = new Uint8Array(record.data.buffer || record.data);
+          // NDEF Text records have a status byte at the start
+          // Bit 7: UTF-8 (0) or UTF-16 (1)
+          // Bits 5-0: Length of language code
+          const statusByte = data[0];
+          const langLen = statusByte & 0x3F;
+          const isUtf16 = (statusByte & 0x80) !== 0;
+          
+          const textData = data.slice(1 + langLen);
+          const decoder = new TextDecoder(isUtf16 ? 'utf-16' : 'utf-8');
+          text += decoder.decode(textData);
+        } catch(e) {
+          // Fallback: raw decode and clean
+          try {
+            const raw = new TextDecoder('utf-8').decode(record.data);
+            // Remove non-printable characters and language prefix (e.g. 'en')
+            text += raw.replace(/[\x00-\x1F\x7F-\x9F]/g, "").replace(/^[a-z]{2}/, "");
+          } catch(e2) {}
+        }
       }
-      return text.trim();
+      // Final cleanup: remove any hidden control chars and whitespace
+      return text.replace(/[\x00-\x1F\x7F-\x9F]/g, "").trim();
     }
 
     async function startNFCAuth() {
       if (!('NDEFReader' in window)) return setStatus('auth-status', 'NFC NOT SUPPORTED', 'status-err');
       const savedHash = localStorage.getItem('kronos_key_enc');
-      if (localStorage.getItem('kronos_emergency') === '1') return setStatus('auth-status', 'SYSTEM LOCKED. USE ERMAC.', 'status-err');
-      if (!savedHash) return setStatus('auth-status', 'NO KEY CONFIGURED. USE ERMAC.', 'status-err');
+      if (localStorage.getItem('kronos_emergency') === '1') return setStatus('auth-status', 'SYSTEM LOCKED', 'status-err');
+      if (!savedHash) return setStatus('auth-status', 'NO KEY CONFIGURED', 'status-err');
 
       setStatus('auth-status', 'WAITING 4 TAG...', 'status-scan');
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.onreading = async ({ message }) => {
-          const content = extractText(message);
-          if (!content.includes(MASTER_EXT)) return setStatus('auth-status', 'INVALID EXTENSION', 'status-err');
-          const keyPart = content.replace(MASTER_EXT, "");
-          if (keyPart.length !== 22) return setStatus('auth-status', 'INVALID KEY (22 REQ)', 'status-err');
+          const raw = extractText(message);
           
-          const currentHash = await hashContent(content);
+          // Debugging log for auth
+          console.log("Auth Read:", raw);
+
+          if (!raw.includes(MASTER_EXT)) return setStatus('auth-status', 'EXTENSION MISSING', 'status-err');
+          
+          const keyPart = raw.split(MASTER_EXT)[0];
+          if (keyPart.length !== 22) return setStatus('auth-status', `INVALID KEY (${keyPart.length}/22)`, 'status-err');
+          
+          const currentHash = await hashContent(raw);
           if (currentHash === savedHash) {
             setStatus('auth-status', 'ACCESS GRANTED', 'status-ok');
             setTimeout(login, 800);
@@ -297,35 +259,31 @@
       } catch (err) { setStatus('auth-status', 'NFC ERROR: ' + err.message, 'status-err'); }
     }
 
-    function login() { document.getElementById('lock-screen').classList.add('hidden'); document.getElementById('main-screen').classList.remove('hidden'); renderFiles(); }
-    function kickOut() { document.getElementById('main-screen').classList.add('hidden'); document.getElementById('lock-screen').classList.remove('hidden'); setStatus('auth-status', 'SESSION LOCKED', ''); }
-
-    function openErmacPin() { openModal('modal-pin'); document.getElementById('pin-input').value = ''; }
-    async function checkErmacPin() {
-      if (document.getElementById('pin-input').value === PIN_ERMAC) { closeModal('modal-pin'); openErmacPanel(); }
-      else { setStatus('pin-status', 'ACCESS DENIED', 'status-err'); }
-    }
-
-    function openErmacPanel() {
-      openModal('modal-ermac');
-      const hasKey = localStorage.getItem('kronos_key_enc');
-      document.getElementById('ermac-key-status').textContent = hasKey ? "MASTER KEY CONFIGURED" : "NO KEY REGISTERED";
-      document.getElementById('ermac-key-status').style.color = hasKey ? "var(--green)" : "var(--yellow)";
-    }
-
     async function scanErmacTag() {
       if (!('NDEFReader' in window)) return setStatus('ermac-status', 'NFC NOT SUPPORTED', 'status-err');
       setStatus('ermac-status', 'WAITING 4 TAG...', 'status-scan');
+      const debug = document.getElementById('ermac-debug');
+      debug.textContent = "Scanning...";
+
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.onreading = async ({ message }) => {
-          const content = extractText(message);
-          if (!content.includes(MASTER_EXT)) return setStatus('ermac-status', 'FAILED: MISSING EXTENSION', 'status-err');
-          const keyPart = content.replace(MASTER_EXT, "");
-          if (keyPart.length !== 22) return setStatus('ermac-status', 'FAILED: KEY MUST BE 22 DIGITS', 'status-err');
-          
-          const encrypted = await hashContent(content);
+          const raw = extractText(message);
+          debug.textContent = "Read: " + raw;
+
+          if (!raw.includes(MASTER_EXT)) {
+            setStatus('ermac-status', 'FAILED: EXTENSION MISSING', 'status-err');
+            return;
+          }
+
+          const keyPart = raw.split(MASTER_EXT)[0];
+          if (keyPart.length !== 22) {
+            setStatus('ermac-status', `FAILED: KEY IS ${keyPart.length} CHARS (NEED 22)`, 'status-err');
+            return;
+          }
+
+          const encrypted = await hashContent(raw);
           localStorage.setItem('kronos_key_enc', encrypted);
           localStorage.removeItem('kronos_emergency');
           setStatus('ermac-status', 'MASTER KEY REGISTERED', 'status-ok');
@@ -334,67 +292,24 @@
       } catch (e) { setStatus('ermac-status', 'ERROR: ' + e.message, 'status-err'); }
     }
 
+    /* UI & Modal Helpers */
+    function login() { document.getElementById('lock-screen').classList.add('hidden'); document.getElementById('main-screen').classList.remove('hidden'); renderFiles(); }
+    function kickOut() { document.getElementById('main-screen').classList.add('hidden'); document.getElementById('lock-screen').classList.remove('hidden'); setStatus('auth-status', 'SESSION LOCKED', ''); }
+    function openErmacPin() { openModal('modal-pin'); document.getElementById('pin-input').value = ''; }
+    async function checkErmacPin() { if (document.getElementById('pin-input').value === PIN_ERMAC) { closeModal('modal-pin'); openErmacPanel(); } else setStatus('pin-status', 'ACCESS DENIED', 'status-err'); }
+    function openErmacPanel() { openModal('modal-ermac'); const hasKey = localStorage.getItem('kronos_key_enc'); document.getElementById('ermac-key-status').textContent = hasKey ? "MASTER KEY CONFIGURED" : "NO KEY REGISTERED"; document.getElementById('ermac-key-status').style.color = hasKey ? "var(--green)" : "var(--yellow)"; }
     function emergencyLock() { localStorage.removeItem('kronos_key_enc'); localStorage.setItem('kronos_emergency', '1'); setStatus('ermac-status', 'EMERGENCY LOCK ACTIVE', 'status-err'); openErmacPanel(); }
-
-    /* File Manager logic remains same */
     function triggerFileUpload() { document.getElementById('file-upload-input').click(); }
-    async function handleFileSelect(e) {
-      const files = e.target.files;
-      for (const file of files) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const fileData = { name: file.name, type: file.type, size: file.size, data: event.target.result, path: currentPath, timestamp: Date.now() };
-          const tx = db.transaction(STORE_FILES, 'readwrite');
-          tx.objectStore(STORE_FILES).add(fileData);
-          tx.oncomplete = () => renderFiles();
-        };
-        reader.readAsDataURL(file);
-      }
-    }
+    async function handleFileSelect(e) { const files = e.target.files; for (const file of files) { const reader = new FileReader(); reader.onload = async (ev) => { const fd = { name: file.name, type: file.type, size: file.size, data: ev.target.result, path: currentPath, timestamp: Date.now() }; const tx = db.transaction(STORE_FILES, 'readwrite'); tx.objectStore(STORE_FILES).add(fd); tx.oncomplete = () => renderFiles(); }; reader.readAsDataURL(file); } }
     function promptNewFolder() { openModal('modal-folder'); document.getElementById('folder-input').value = ''; }
-    async function createFolder() {
-      const name = document.getElementById('folder-input').value.trim();
-      if (!name) return;
-      const folderData = { name, path: currentPath };
-      const tx = db.transaction(STORE_FOLDERS, 'readwrite');
-      tx.objectStore(STORE_FOLDERS).add(folderData);
-      tx.oncomplete = () => { closeModal('modal-folder'); renderFiles(); };
-    }
-    async function renderFiles() {
-      if (!db) return;
-      const container = document.getElementById('file-list-container');
-      container.innerHTML = '';
-      const pathParts = currentPath.split('/').filter(p => p);
-      let pathHtml = 'PATH: <span onclick="navigateTo('/')">ROOT</span>';
-      let fullPath = '';
-      pathParts.forEach(p => { fullPath += '/' + p; pathHtml += ` / <span onclick="navigateTo('${fullPath}')">${p}</span>`; });
-      document.getElementById('current-path-bar').innerHTML = pathHtml;
-      const tx = db.transaction([STORE_FILES, STORE_FOLDERS], 'readonly');
-      tx.objectStore(STORE_FOLDERS).index('path').getAll(currentPath).onsuccess = (e) => {
-        e.target.result.forEach(f => {
-          const item = document.createElement('div');
-          item.className = 'file-item';
-          item.innerHTML = `<div class="file-icon" style="color:var(--yellow)">&#128193;</div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">Folder</div></div><div class="file-ops"><span onclick="deleteFolder(${f.id}, event)">&#128465;</span></div>`;
-          item.onclick = () => navigateTo((currentPath === '/' ? '' : currentPath) + '/' + f.name);
-          container.appendChild(item);
-        });
-      };
-      tx.objectStore(STORE_FILES).index('path').getAll(currentPath).onsuccess = (e) => {
-        e.target.result.forEach(f => {
-          const item = document.createElement('div');
-          item.className = 'file-item';
-          item.innerHTML = `<div class="file-icon">&#128196;</div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">${formatSize(f.size)} | ${f.type || 'Unknown'}</div></div><div class="file-ops"><span onclick="downloadFile(${f.id}, event)">&#11123;</span><span onclick="deleteFile(${f.id}, event)">&#128465;</span></div>`;
-          item.onclick = () => previewFile(f);
-          container.appendChild(item);
-        });
-      };
-    }
-    function navigateTo(path) { currentPath = path; renderFiles(); }
-    function formatSize(bytes) { if (bytes === 0) return '0 B'; const k = 1024; const sizes = ['B', 'KB', 'MB', 'GB']; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]; }
+    async function createFolder() { const n = document.getElementById('folder-input').value.trim(); if (!n) return; const fd = { name: n, path: currentPath }; const tx = db.transaction(STORE_FOLDERS, 'readwrite'); tx.objectStore(STORE_FOLDERS).add(fd); tx.oncomplete = () => { closeModal('modal-folder'); renderFiles(); }; }
+    async function renderFiles() { if (!db) return; const c = document.getElementById('file-list-container'); c.innerHTML = ''; const tx = db.transaction([STORE_FILES, STORE_FOLDERS], 'readonly'); tx.objectStore(STORE_FOLDERS).index('path').getAll(currentPath).onsuccess = (e) => { e.target.result.forEach(f => { const i = document.createElement('div'); i.className = 'file-item'; i.innerHTML = `<div class="file-icon" style="color:var(--yellow)">&#128193;</div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">Folder</div></div><div class="file-ops"><span onclick="deleteFolder(${f.id}, event)">&#128465;</span></div>`; i.onclick = () => navigateTo((currentPath === '/' ? '' : currentPath) + '/' + f.name); c.appendChild(i); }); }; tx.objectStore(STORE_FILES).index('path').getAll(currentPath).onsuccess = (e) => { e.target.result.forEach(f => { const i = document.createElement('div'); i.className = 'file-item'; i.innerHTML = `<div class="file-icon">&#128196;</div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-meta">${formatSize(f.size)} | ${f.type || 'Unknown'}</div></div><div class="file-ops"><span onclick="downloadFile(${f.id}, event)">&#11123;</span><span onclick="deleteFile(${f.id}, event)">&#128465;</span></div>`; i.onclick = () => previewFile(f); c.appendChild(i); }); }; }
+    function navigateTo(p) { currentPath = p; renderFiles(); }
+    function formatSize(b) { if (b === 0) return '0 B'; const k = 1024; const s = ['B', 'KB', 'MB', 'GB']; const i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + s[i]; }
     async function deleteFile(id, e) { e.stopPropagation(); const tx = db.transaction(STORE_FILES, 'readwrite'); tx.objectStore(STORE_FILES).delete(id); tx.oncomplete = () => renderFiles(); }
     async function deleteFolder(id, e) { e.stopPropagation(); const tx = db.transaction(STORE_FOLDERS, 'readwrite'); tx.objectStore(STORE_FOLDERS).delete(id); tx.oncomplete = () => renderFiles(); }
-    async function downloadFile(id, e) { e.stopPropagation(); const tx = db.transaction(STORE_FILES, 'readonly'); tx.objectStore(STORE_FILES).get(id).onsuccess = (e) => { const f = e.target.result; const link = document.createElement('a'); link.href = f.data; link.download = f.name; link.click(); }; }
-    function previewFile(f) { if (f.type.startsWith('image/')) { const win = window.open(""); win.document.write(`<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;"><img src="${f.data}" style="max-width:100%;max-height:100%;"></body>`); } else { alert("Use Download."); } }
+    async function downloadFile(id, e) { e.stopPropagation(); const tx = db.transaction(STORE_FILES, 'readonly'); tx.objectStore(STORE_FILES).get(id).onsuccess = (e) => { const f = e.target.result; const l = document.createElement('a'); l.href = f.data; l.download = f.name; l.click(); }; }
+    function previewFile(f) { if (f.type.startsWith('image/')) { const w = window.open(""); w.document.write(`<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;"><img src="${f.data}" style="max-width:100%;max-height:100%;"></body>`); } else alert("Use Download."); }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function setStatus(id, msg, cls) { const el = document.getElementById(id); el.textContent = msg; el.className = 'status-msg ' + cls; }
